@@ -11,8 +11,9 @@ out/
 build/
 dist/
 
-# Environment files (will be provided via docker-compose or runtime)
-.env
+# Environment files
+# Allow .env for production builds (Dokploy provides this)
+# Exclude local development files only
 .env.local
 .env.development.local
 .env.test.local

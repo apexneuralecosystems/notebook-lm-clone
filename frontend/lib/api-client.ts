@@ -1,17 +1,18 @@
 import axios from 'axios';
 
-// Get API URL from environment variable (required)
-// This must be set in .env.local or .env file
-// See frontend/.env.example for configuration
-// Get API URL from environment variable (required)
-// This must be set in .env.local or .env file
-// See frontend/.env.example for configuration
+// Get API URL from environment variable
+// Next.js automatically reads .env file during build
+// In local: use .env.local
+// In production (Dokploy): use .env file
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-if (!API_URL) {
+
+// Validate at runtime only (not during build) to allow build to complete
+// This allows Next.js to read .env file during build without throwing errors
+if (typeof window !== 'undefined' && !API_URL) {
+  // Runtime validation (client-side only)
   console.error('NEXT_PUBLIC_API_URL environment variable is required');
-  console.error('Please create a .env.local file in the frontend directory');
-  console.error('See frontend/.env.example for the required format');
-  throw new Error('NEXT_PUBLIC_API_URL is not set. Please configure it in frontend/.env.local');
+  console.error('Please set it in .env.local (local) or .env (production)');
+  throw new Error('NEXT_PUBLIC_API_URL is not set. Please configure it in your .env file.');
 }
 
 const apiClient = axios.create({
