@@ -38,11 +38,30 @@ RUN npm run build
 # Stage 3: Nginx Runner
 FROM nginx:alpine AS runner
 
+# Install Node.js for running the env.js generation script
+RUN apk add --no-cache nodejs
+
 # Copy nginx configuration (from build context, not builder stage)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy static export output to nginx html directory
 COPY --from=builder /app/out /usr/share/nginx/html
+
+# Copy the env.js generation script
+COPY --from=builder /app/scripts/generate-env.js /usr/local/bin/generate-env.js
+RUN chmod +x /usr/local/bin/generate-env.js
+
+# Create entrypoint script that generates env.js and starts nginx
+RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
+    echo 'set -e' >> /docker-entrypoint.sh && \
+    echo '' >> /docker-entrypoint.sh && \
+    echo '# Generate env.js from environment variables at runtime' >> /docker-entrypoint.sh && \
+    echo '# This reads NEXT_PUBLIC_API_URL from Docker environment variables' >> /docker-entrypoint.sh && \
+    echo 'node /usr/local/bin/generate-env.js /usr/share/nginx/html' >> /docker-entrypoint.sh && \
+    echo '' >> /docker-entrypoint.sh && \
+    echo '# Start nginx' >> /docker-entrypoint.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /docker-entrypoint.sh && \
+    chmod +x /docker-entrypoint.sh
 
 # Expose port 3019 (can be overridden via PORT env var, but nginx.conf uses 3019)
 EXPOSE 3019
@@ -57,5 +76,5 @@ RUN apk add --no-cache wget
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3019 || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint that generates env.js before starting nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]

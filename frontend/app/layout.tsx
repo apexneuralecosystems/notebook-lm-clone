@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -18,6 +19,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Load runtime environment variables before React hydrates */}
+        {/* This must load synchronously and before any client components */}
+        <Script
+          id="env-loader"
+          strategy="beforeInteractive"
+          src="/env.js"
+        />
+      </head>
       <body>{children}</body>
     </html>
   )

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { podcastAPI } from '@/lib/api-client';
+import { getApiUrl } from '@/lib/env';
 import { Mic, Loader2, Download } from 'lucide-react';
 
 export default function StudioTab() {
@@ -56,7 +57,7 @@ export default function StudioTab() {
         
         // Load audio as blob for playback (required for auth headers)
         if (response.data.audio_available && response.data.audio_files && Array.isArray(response.data.audio_files) && response.data.audio_files.length > 0) {
-          const audioApiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${response.data.audio_files[0]}`;
+          const audioApiUrl = `${getApiUrl()}${response.data.audio_files[0]}`;
           const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
           
           console.log('Loading audio from:', audioApiUrl);
@@ -301,7 +302,7 @@ export default function StudioTab() {
                     <button
                       onClick={async () => {
                         try {
-                          const audioApiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${result.audio_files[0]}`;
+                          const audioApiUrl = `${getApiUrl()}${result.audio_files[0]}`;
                           const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
                           
                           const response = await fetch(audioApiUrl, {
