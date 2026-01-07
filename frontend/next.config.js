@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Enable standalone output for Docker
-  output: 'standalone',
+  // Enable static export for nginx serving
+  output: 'export',
+  // Disable image optimization for static export
+  images: {
+    unoptimized: true,
+  },
   // Disable caching for the root page to prevent redirect issues
   async headers() {
     return [

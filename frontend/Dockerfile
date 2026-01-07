@@ -1,5 +1,5 @@
 # Frontend Dockerfile for NotebookLM Next.js App
-# Multi-stage build for optimization
+# Multi-stage build with nginx for static serving
 
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
@@ -32,45 +32,30 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application (static export)
 RUN npm run build
 
-# Stage 3: Runner
-FROM node:20-alpine AS runner
-WORKDIR /app
+# Stage 3: Nginx Runner
+FROM nginx:alpine AS runner
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+# Copy nginx configuration (from build context, not builder stage)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Copy static export output to nginx html directory
+COPY --from=builder /app/out /usr/share/nginx/html
 
-# Copy standalone output (includes server.js, dependencies, and public files if they exist)
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# Expose port 3019 (can be overridden via PORT env var, but nginx.conf uses 3019)
+EXPOSE 3019
 
-# Copy static files
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Set port environment variable (defaults to 3019)
+# Note: nginx.conf is hardcoded to 3019, but we keep PORT for consistency
+ENV PORT=3019
 
-# Create public directory (empty if source doesn't have one)
-# Next.js standalone output may include public, but we ensure the directory exists
-RUN mkdir -p ./public || true
+# Health check - checks nginx on port 3019
+# Install wget for health check (nginx:alpine doesn't include it by default)
+RUN apk add --no-cache wget
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3019 || exit 1
 
-# Set ownership
-RUN chown -R nextjs:nodejs /app
-
-# Switch to non-root user
-USER nextjs
-
-# Expose port
-EXPOSE 3000
-
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
-
-# Start the application
-CMD ["node", "server.js"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
