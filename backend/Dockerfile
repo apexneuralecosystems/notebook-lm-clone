@@ -29,6 +29,10 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p logs outputs/podcast_audio uploads qdrant_db
 
+# Copy and set permissions for entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port (EXPOSE is informational - actual port comes from BACKEND_PORT env var)
 # Default to 8000, but can be overridden via environment variable at runtime
 EXPOSE 8000
@@ -49,10 +53,10 @@ ENV BACKEND_HOST=0.0.0.0
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD sh -c 'curl -f http://localhost:${BACKEND_PORT:-8000}/health || exit 1'
 
-# Run the application
-# Use --loop asyncio instead of uvloop to avoid nest_asyncio conflict
-# Uses BACKEND_HOST and BACKEND_PORT from environment variables
-# The application (run.py) reads these from app.config which reads from env vars
-# Runtime environment variables will override the ENV values set above
-CMD sh -c "uv run uvicorn app.api:app --host \"${BACKEND_HOST:-0.0.0.0}\" --port \"${BACKEND_PORT:-8000}\" --loop asyncio"
+# Use entrypoint script that runs migrations before starting server
+# The entrypoint script will:
+# 1. Wait for database to be ready
+# 2. Run database migrations (alembic upgrade head)
+# 3. Start the FastAPI server
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
