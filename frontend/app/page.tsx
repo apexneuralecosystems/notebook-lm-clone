@@ -1,42 +1,8 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Brain, FileText, MessageSquare, Mic } from '@/components/LandingPageIcons';
 
-// Landing page - explicitly prevents any redirects to /app or /login
-// This ensures the root path (/) always shows the landing page
+// Server component landing page - no client-side effects, no redirects
 export default function Home() {
-  const hasRun = useRef(false);
-
-  // Explicitly prevent any redirects from landing page (run only once)
-  useEffect(() => {
-    // Only run once on mount
-    if (hasRun.current || typeof window === 'undefined') return;
-    hasRun.current = true;
-
-    // CRITICAL: If we're on /app, redirect to / (should never happen, but safety check)
-    if (window.location.pathname === '/app') {
-      window.location.replace('/');
-      return;
-    }
-
-    // Ensure we're on the root path
-    if (window.location.pathname !== '/') {
-      window.history.replaceState(null, '', '/');
-    }
-    
-    // Clear any hash that might cause issues
-    if (window.location.hash) {
-      window.history.replaceState(null, '', '/');
-    }
-  }, []); // Empty dependency array - only run once
-
-  // CRITICAL: Don't render if we're somehow on /app (should never happen)
-  if (typeof window !== 'undefined' && window.location.pathname === '/app') {
-    return null; // Will redirect via useEffect
-  }
-
   // Landing page - always public, no authentication checks, no redirects
   return (
     <div className="min-h-screen bg-background text-foreground">
