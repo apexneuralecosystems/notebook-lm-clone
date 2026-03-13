@@ -19,14 +19,30 @@ export default function AppPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // CRITICAL: Ensure app page only renders on /app, never on /
-  // If somehow this component is rendered on root path, redirect to landing page
+  // If somehow this component is rendered on root path, immediately redirect
   useEffect(() => {
-    if (typeof window !== 'undefined' && pathname === '/') {
-      // This should never happen, but if it does, go to landing page
-      window.location.href = '/';
-      return;
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      if (currentPath === '/' || currentPath !== '/app') {
+        // If we're not on /app, we shouldn't be here - redirect to landing page
+        if (currentPath === '/') {
+          // Force a full page reload to landing page
+          window.location.replace('/');
+          return;
+        }
+        // If on some other path that's not /app, redirect to /app
+        if (currentPath !== '/app') {
+          window.location.replace('/app');
+          return;
+        }
+      }
     }
   }, [pathname]);
+  
+  // Don't render anything if we're on the wrong path
+  if (typeof window !== 'undefined' && window.location.pathname !== '/app') {
+    return null;
+  }
 
   // Wait for Zustand persist to hydrate from localStorage
   useEffect(() => {
