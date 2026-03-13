@@ -15,6 +15,12 @@ export default function Home() {
     if (hasRun.current || typeof window === 'undefined') return;
     hasRun.current = true;
 
+    // CRITICAL: If we're on /app, redirect to / (should never happen, but safety check)
+    if (window.location.pathname === '/app') {
+      window.location.replace('/');
+      return;
+    }
+
     // Ensure we're on the root path
     if (window.location.pathname !== '/') {
       window.history.replaceState(null, '', '/');
@@ -25,6 +31,11 @@ export default function Home() {
       window.history.replaceState(null, '', '/');
     }
   }, []); // Empty dependency array - only run once
+
+  // CRITICAL: Don't render if we're somehow on /app (should never happen)
+  if (typeof window !== 'undefined' && window.location.pathname === '/app') {
+    return null; // Will redirect via useEffect
+  }
 
   // Landing page - always public, no authentication checks, no redirects
   return (
