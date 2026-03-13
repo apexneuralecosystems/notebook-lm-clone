@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { authAPI } from '@/lib/api-client';
 import SourcesSidebar from '@/components/SourcesSidebar';
@@ -12,10 +12,21 @@ import { Loader2 } from 'lucide-react';
 
 export default function AppPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, user, logout, accessToken, setAuth } = useStore();
   const [activeTab, setActiveTab] = useState<'sources' | 'chat' | 'studio'>('chat');
   const [isHydrated, setIsHydrated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // CRITICAL: Ensure app page only renders on /app, never on /
+  // If somehow this component is rendered on root path, redirect to landing page
+  useEffect(() => {
+    if (typeof window !== 'undefined' && pathname === '/') {
+      // This should never happen, but if it does, go to landing page
+      window.location.href = '/';
+      return;
+    }
+  }, [pathname]);
 
   // Wait for Zustand persist to hydrate from localStorage
   useEffect(() => {
