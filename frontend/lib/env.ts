@@ -41,7 +41,10 @@ export function getApiUrl(): string {
   if (typeof window !== 'undefined' && !apiUrl) {
     console.error('⚠️ NEXT_PUBLIC_API_URL is not configured');
     console.error('⚠️ Make sure /env.js is loaded and NEXT_PUBLIC_API_URL is set in Dokploy Environments');
-    throw new Error('NEXT_PUBLIC_API_URL is not set. Check /env.js and Dokploy environment variables.');
+    console.error('⚠️ Checking window.__ENV__:', window.__ENV__);
+    // Don't throw - return empty string so app can still render
+    // Individual API calls will fail gracefully
+    return '';
   }
 
   return apiUrl || '';

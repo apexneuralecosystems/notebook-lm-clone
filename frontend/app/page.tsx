@@ -1,9 +1,33 @@
+'use client';
+
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Brain, FileText, MessageSquare, Mic } from '@/components/LandingPageIcons';
 
-// Server component - no client-side JavaScript, no redirects possible
-// Icons are in a separate client component but page itself is server-rendered
+// Landing page - explicitly prevents any redirects to /app or /login
+// This ensures the root path (/) always shows the landing page
 export default function Home() {
+  const pathname = usePathname();
+
+  // Explicitly prevent any redirects from landing page
+  useEffect(() => {
+    // Ensure we're on the root path
+    if (typeof window !== 'undefined' && pathname === '/') {
+      // Clear any potential redirect state or hash
+      if (window.location.hash) {
+        window.history.replaceState(null, '', '/');
+      }
+      
+      // Prevent any automatic navigation away from landing page
+      // This is a safety net to ensure landing page always shows
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/') {
+        window.history.replaceState(null, '', '/');
+      }
+    }
+  }, [pathname]);
+
   // Landing page - always public, no authentication checks, no redirects
   return (
     <div className="min-h-screen bg-background text-foreground">

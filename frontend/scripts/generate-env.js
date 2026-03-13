@@ -16,8 +16,13 @@ const path = require('path');
 const outputDir = process.argv[2] || process.cwd();
 
 // Get environment variables (from Dokploy Environments or Docker env vars)
+// Check multiple possible sources
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
+               process.env['NEXT_PUBLIC_API_URL'] || 
+               '';
+
 const envVars = {
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
+  NEXT_PUBLIC_API_URL: apiUrl,
 };
 
 // Generate the env.js file content
@@ -45,7 +50,10 @@ Object.entries(envVars).forEach(([key, value]) => {
 });
 
 if (!envVars.NEXT_PUBLIC_API_URL) {
-  console.warn('⚠️  WARNING: NEXT_PUBLIC_API_URL is not set!');
-  console.warn('⚠️  Set it in Dokploy Environments or Docker environment variables');
+  console.error('❌ ERROR: NEXT_PUBLIC_API_URL is not set!');
+  console.error('❌ Set it in Dokploy Environments or Docker environment variables');
+  console.error('❌ Current process.env keys:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('URL')).join(', ') || 'none found');
+  // Don't exit - still generate empty env.js so app doesn't crash
+  // The app will show a user-friendly error message
 }
 
