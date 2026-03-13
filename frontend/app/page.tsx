@@ -1,32 +1,30 @@
 'use client';
 
-import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Brain, FileText, MessageSquare, Mic } from '@/components/LandingPageIcons';
 
 // Landing page - explicitly prevents any redirects to /app or /login
 // This ensures the root path (/) always shows the landing page
 export default function Home() {
-  const pathname = usePathname();
+  const hasRun = useRef(false);
 
-  // Explicitly prevent any redirects from landing page
+  // Explicitly prevent any redirects from landing page (run only once)
   useEffect(() => {
+    // Only run once on mount
+    if (hasRun.current || typeof window === 'undefined') return;
+    hasRun.current = true;
+
     // Ensure we're on the root path
-    if (typeof window !== 'undefined' && pathname === '/') {
-      // Clear any potential redirect state or hash
-      if (window.location.hash) {
-        window.history.replaceState(null, '', '/');
-      }
-      
-      // Prevent any automatic navigation away from landing page
-      // This is a safety net to ensure landing page always shows
-      const currentPath = window.location.pathname;
-      if (currentPath !== '/') {
-        window.history.replaceState(null, '', '/');
-      }
+    if (window.location.pathname !== '/') {
+      window.history.replaceState(null, '', '/');
     }
-  }, [pathname]);
+    
+    // Clear any hash that might cause issues
+    if (window.location.hash) {
+      window.history.replaceState(null, '', '/');
+    }
+  }, []); // Empty dependency array - only run once
 
   // Landing page - always public, no authentication checks, no redirects
   return (
